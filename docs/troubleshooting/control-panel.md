@@ -84,3 +84,24 @@ Log in to the Control Panel fails on a Windows-based server.
 Open system/user/config/config.php and add the following line:
 
     $config['redirect_method'] = "refresh";
+
+## Getting a 500 Internal Server error accessing the control panel
+
+### Problem
+
+Accessing the control panel fails with a 500 Internal Server error, without any detailed information.
+
+### Solution
+
+`mod_security`, an Apache module, is most likely to blame. This module is designed to protect a server and web software from many common hacking attacks. The types of things it blocks would be goofy if an unknown actor tried to do it on the front end of our website. However, they are often legimiate actions by an authenticated admin using a content management system's control panel. For example, submitting HTML code in a textarea.
+
+Therefore, `mod_security`'s *content-based* filter rules should be excluded from the control panel. That may not be possible with your web host as they often just deploy `mod_security` rulesets that are found in a standard package. If that's the case, the solution is to disable `mod_security` entirely, but just for your control panel. You can ask your web host to do this for you or you may be able to disable it in your `.htaccess` file:
+
+    <IfModule mod_security.c>
+    <If "%{REQUEST_URI} =~ m#^/admin\.php\?/cp/#">
+        SecFilterEngine Off
+        SecFilterScanPOST Off
+    </If>
+    </IfModule>
+
+Replace `admin\.php` with whatever you renamed your admin.php file to, making sure to escape any dots (`.`) with a backslash (`\`).
